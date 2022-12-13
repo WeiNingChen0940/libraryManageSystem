@@ -27,4 +27,12 @@
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="books.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="users.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+  </ItemGroup>
 </Project>
