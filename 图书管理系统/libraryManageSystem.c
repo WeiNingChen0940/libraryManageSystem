@@ -1,15 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#define NULL ((void*)0)
-
-typedef struct BOOKS_DATA
-{
-    Books_data *link;
-    char *bookName;
-    int prize;
-}Books_data;
-Books_data *rootp = NULL;
-//sign up & log out
+#include "libraryManageSystem.h"
+//
+//typedef struct BOOKS_DATA
+//{
+//    struct BOOKS_DATA *link;
+//    char *bookName;
+//    int prize;
+//}Books_data;
+//Books_data *rootp = NULL;
+//登录界面
 int SignUp(const char *userAccount, const char *userPassword)
 {
     printf("**********************\n");
@@ -40,7 +38,7 @@ int SignUp(const char *userAccount, const char *userPassword)
 
     return 0;
 }
-
+//账号输入界面，成功登录返回1，否则返回0
 int AccountPassword(const char *userAccount, const char *userPassword)
 {
     int isSuccessful = 0;
@@ -51,26 +49,28 @@ int AccountPassword(const char *userAccount, const char *userPassword)
     printf("请输入账号密码：");
     char password[21] = { 0 };
     scanf_s("%s", password, 20);
+    //账号密码都正确
     if(strcmp(account, userAccount) == 0 && strcmp(password, userPassword) == 0)
     {
         isSuccessful = 1;
 
     }
-    else if(strcmp(account, userAccount) == 0)
+    else if(strcmp(account, userAccount) == 0)//账号正确，密码错误
     {
         isSuccessful = password_retry(userPassword);
     }
-    else if(strcmp(password, userPassword) == 0)
+    else if(strcmp(password, userPassword) == 0)//账号错误，密码正确
     {
         isSuccessful = account_retry(userAccount);
     }
-    else
+    else//账号和密码都错误
     {
         account_retry(userAccount);
         isSuccessful = password_retry(userPassword);
     }
     return isSuccessful;
 }
+//单独输入账号，无输入次数限制，成功则返回1
 int account_retry(const char *userAccount)
 {
     char account[21] = { 0 };
@@ -81,7 +81,7 @@ int account_retry(const char *userAccount)
     } while(strcmp(userAccount, account) != 0);
     return 1;
 }
-
+//单独输入密码，输入错误达3次会退出，返回0，密码正确则返回1
 int password_retry(const char *userPassword)
 {
     int isExit = 0;
@@ -101,7 +101,7 @@ int password_retry(const char *userPassword)
     return 1;
 }
 
-
+//分割字符串功能：传入一个字符串origin、分割标识字符串sep和结果字符串数组result，分割完整的结果会储存在result中。函数返回结果字符串的数目
 int split(char origin[], char sep[], char(*result)[201])
 {
     int sepLenth = strlen(sep);
@@ -133,8 +133,8 @@ int split(char origin[], char sep[], char(*result)[201])
     return resultLenth;//返回result字符串数组的最终长度，也就是分割后字符串的数目
 }
 
-
-int linkedList_insert(Books_data **linkp, char *new_name, int prize)
+//插入链表，每次传入的数据会在链表末尾插入，成功插入则返回1，失败则返回0
+int linkedList_insert(Books_data **linkp, char *new_bookName, int prize)
 {
     Books_data *book = (Books_data *)malloc(sizeof(Books_data));
     Books_data *current = *linkp;
@@ -147,10 +147,17 @@ int linkedList_insert(Books_data **linkp, char *new_name, int prize)
         *linkp = &book->link;
         book->link = current;
         book->index = new_value;*/
+
+        //遍历链表直到末尾
         while((current = *linkp) != NULL)
             linkp = &(current->link);
         *linkp = &book->link;
-        book->bookName = new_name;
+        book->link = current;
+        book->bookName = (char *)calloc((strlen(new_bookName) + 1) * sizeof(char), 1);
+        if(book->bookName != NULL)
+            strcpy(book->bookName, new_bookName);
+        else
+            return 0;
         book->prize = prize;
 
         return 1;
@@ -160,10 +167,10 @@ int linkedList_insert(Books_data **linkp, char *new_name, int prize)
         return 0;
     }
 }
-
-int linkedList_change(Books_data *linkp, char *name, int new_prize)
+//更改链表中储存的某个节点的数据（后续要加上相同书名的判断），成功则返回1，失败则返回0
+int linkedList_change(Books_data *linkp, char *bookName, int new_prize)
 {
-    while(linkp != NULL && strcmp(linkp->bookName, name) != 0)
+    while(linkp != NULL && strcmp(linkp->bookName, bookName) != 0)
         linkp = linkp->link;
     if(linkp == NULL)
     {
@@ -176,15 +183,17 @@ int linkedList_change(Books_data *linkp, char *name, int new_prize)
     }
 
 }
-
-int linkedList_delete(Books_data **linkp, char *name)
+//删除链表节点，成功则返回1，失败则返回0
+int linkedList_delete(Books_data **linkp, char *bookName)
 {
-    Books_data *current = *linkp;
-    while((current = *linkp) != NULL && strcmp(current->bookName, name) != 0)
+    Books_data *current = NULL;
+    while((current = *linkp) != NULL && strcmp(current->bookName, bookName) != 0)
         linkp = &(current->link);
-    if(strcmp(current->bookName, name) == 0)
+    if(strcmp(current->bookName, bookName) == 0)
     {
         *linkp = current->link;
+        //printf("书籍 %s 删除完毕\n", bookName);
+        free(current->bookName);
         free(current);
         return 1;
     }
@@ -193,18 +202,36 @@ int linkedList_delete(Books_data **linkp, char *name)
         return 0;
     }
 }
-
-Books_data *book_new(char *name, int prize)
+//删除从*linkp所指向的链表后面所有节点，返回删除的节点个数：i
+int linkedList_delete_all(Books_data **linkp)
 {
-    Books_data *newBook = (Books_data *)malloc(sizeof(Books_data));
-    if(newBook != NULL)
+    Books_data *current = *linkp;
+    Books_data **rootp = linkp;
+    int i = 0;
+    while(*rootp != NULL)
     {
-        newBook->bookName = name;
-        newBook->prize = prize;
-        return newBook;
+        current = *rootp;
+        linkp = rootp;
+        while((current = *linkp)->link != NULL)
+            linkp = &current->link;
+        linkedList_delete(linkp, current->bookName);
+        i++;
     }
-    else
-    {
-        return NULL;
-    }
+    return i;
 }
+//新建一本书，返回新建的结构体的指针，新建失败则返回空指针
+//Books_data *book_new(char *bookName, int prize)
+//{
+//    Books_data *newBook = (Books_data *)malloc(sizeof(Books_data));
+//    if(newBook != NULL)
+//    {
+//        newBook->bookName = bookName;
+//        newBook->prize = prize;
+//        return newBook;
+//    }
+//    else
+//    {
+//        return NULL;
+//    }
+//}
+
