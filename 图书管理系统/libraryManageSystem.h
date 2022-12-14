@@ -28,7 +28,7 @@ typedef struct USERS_DATA
 }Users_data;
 
 int SignUp(const char *userAccount, const char *userPassword);
-int Menu_Main(Users_data *uLinkp, Books_data *bLinkp);
+int Menu_Main(Users_data **uLinkp, Books_data **bLinkp);
 
 //int split(char origin[], char sep[], char(*result)[201]);
 

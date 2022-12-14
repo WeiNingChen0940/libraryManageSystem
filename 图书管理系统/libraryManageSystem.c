@@ -2,11 +2,11 @@
 static int AccountPassword(const char *userAccount, const char *userPassword);
 static int account_retry(const char *userAccount);
 static int password_retry(const char *userPassword);
-static int Menu_UsersManage(Users_data *linkp);
+static int Menu_UsersManage(Users_data **linkp);
 static int Menu_UsersManage_ShowAllUsers(Users_data *linkp ,int isPause);
-static int Menu_BooksManage(Books_data *linkp);
+static int Menu_BooksManage(Books_data **linkp);
 static int Menu_BooksManage_ShowAllBooks(Books_data *linkp, int isPause);
-static int Menu_Shopping(Users_data *uLinkp, Books_data *bLinkp);
+static int Menu_Shopping(Users_data **uLinkp, Books_data **bLinkp);
 //登录界面
 int SignUp(const char *userAccount, const char *userPassword)
 {
@@ -104,7 +104,7 @@ static int password_retry(const char *userPassword)
 
 //菜单构建
 
-int Menu_Main(Users_data *uLinkp, Books_data *bLinkp)
+int Menu_Main(Users_data **uLinkp, Books_data **bLinkp)
 {
     //while(getchar() != '\n');
     char key = 0;
@@ -145,7 +145,7 @@ int Menu_Main(Users_data *uLinkp, Books_data *bLinkp)
 }
 
 //会员管理
-static int Menu_UsersManage(Users_data *linkp)
+static int Menu_UsersManage(Users_data **linkp)
 {
     char key = 0;
     while((key = getchar()) != EOF)
@@ -162,7 +162,7 @@ static int Menu_UsersManage(Users_data *linkp)
         {
         case '1':
             system("cls");
-            Menu_UsersManage_ShowAllUsers(linkp, 1);
+            Menu_UsersManage_ShowAllUsers(*linkp, 1);
             break;
         case '2':
         {
@@ -173,7 +173,7 @@ static int Menu_UsersManage(Users_data *linkp)
             printf("请输入该会员的初始积分：");
             float credit = 0;
             scanf("%f", &credit);
-            if(user_insert(&linkp, userName, credit) != 0)
+            if(user_insert(linkp, userName, credit) != 0)
                 printf("添加成功！\n");
             else
                 printf("添加失败！\n");
@@ -194,7 +194,7 @@ static int Menu_UsersManage(Users_data *linkp)
             printf("请输入要修改的积分：");
             float credit = 0;
             scanf("%f", &credit);
-            Users_data *l = linkp;
+            Users_data *l = *linkp;
             for(int i = 1; i < number; i++)
                 l = l->link;
             if(user_change(l, l->userName, userName, credit) != 0)
@@ -240,7 +240,7 @@ static int Menu_UsersManage_ShowAllUsers(Users_data *linkp, int isPause)
     return 0;
 }
 
-static int Menu_BooksManage(Books_data *linkp)
+static int Menu_BooksManage(Books_data **linkp)
 {
     char key = 0;
     while((key = getchar()) != EOF)
@@ -258,7 +258,7 @@ static int Menu_BooksManage(Books_data *linkp)
         {
         case '1':
             system("cls");
-            Menu_BooksManage_ShowAllBooks(linkp, 1);
+            Menu_BooksManage_ShowAllBooks(*linkp, 1);
             break;
         case '2':
         {
@@ -269,7 +269,7 @@ static int Menu_BooksManage(Books_data *linkp)
             printf("请输入该书的价格：");
             float prize = 0;
             scanf("%f", &prize);
-            if(book_insert(&linkp, bookName, prize) != 0)
+            if(book_insert(linkp, bookName, prize) != 0)
                 printf("添加成功！\n");
             else
                 printf("添加失败！价格不能为非正数！\n");
@@ -287,7 +287,7 @@ static int Menu_BooksManage(Books_data *linkp)
             printf("请输入修改后的价格：");
             float prize = 0;
             scanf("%f", &prize);
-            Books_data *l = linkp;
+            Books_data *l = *linkp;
             if(book_change(l, bookName, prize) != 0)
                 printf("修改成功！\n");
             else
@@ -303,7 +303,7 @@ static int Menu_BooksManage(Books_data *linkp)
             char bookName[MAX_NAME_LEN] = { 0 };
             scanf("%s", bookName);
             //Books_data *l = linkp;
-            if(book_delete(&linkp, bookName) != 0)
+            if(book_delete(linkp, bookName) != 0)
                 printf("删除成功！\n");
             else
                 printf("删除失败！找不到要删除的书籍\n");
@@ -345,18 +345,18 @@ static int Menu_BooksManage_ShowAllBooks(Books_data *linkp, int isPause)
     return 0;
 }
 
-static int Menu_Shopping(Users_data *uLinkp, Books_data *bLinkp)
+static int Menu_Shopping(Users_data **uLinkp, Books_data **bLinkp)
 {
     Users_data *l = NULL;
     system("cls");
-    Menu_UsersManage_ShowAllUsers(uLinkp, 0);
-    Menu_BooksManage_ShowAllBooks(bLinkp, 0);
+    Menu_UsersManage_ShowAllUsers(*uLinkp, 0);
+    Menu_BooksManage_ShowAllBooks(*bLinkp, 0);
     printf("请输入会员序号：");
     int number = 0;
 
     scanf("%d", &number);
-    float credit = user_getLinkByNumber(uLinkp, number)->credit;
-    if((l = user_getLinkByNumber(uLinkp, number)) != NULL)
+    float credit = user_getLinkByNumber(*uLinkp, number)->credit;
+    if((l = user_getLinkByNumber(*uLinkp, number)) != NULL)
     {
         char isContinue = 'y';
         while(isContinue != 'n')
@@ -367,16 +367,17 @@ static int Menu_Shopping(Users_data *uLinkp, Books_data *bLinkp)
             printf("请输入要购买的本数：");
             scanf("%d", &m);
             float prize = 0;
-            if((prize = book_getLinkByNumber(bLinkp, n)->prize) > 0)
+            if((prize = book_getLinkByNumber(*bLinkp, n)->prize) > 0)
             {
                 credit -= prize * m;
+                user_getLinkByNumber(*uLinkp, n)->credit = credit;
             }
             else
             {
                 printf("找不到该书籍，请重新输入！\n");
                 continue;
             }
-            printf("你要购买的书籍是《%s》，单价为%.2f元，总共%d本，总价为%.2f元\n", book_getLinkByNumber(bLinkp, n)->bookName, prize, m, prize * m);
+            printf("你要购买的书籍是《%s》，单价为%.2f元，总共%d本，总价为%.2f元\n", book_getLinkByNumber(*bLinkp, n)->bookName, prize, m, prize * m);
             printf("输入y继续买书，输入n结束购物：");
             scanf("%c", &isContinue);
             scanf("%c", &isContinue);
@@ -400,7 +401,8 @@ int book_insert(Books_data **linkp, char *new_bookName, float prize)
         //遍历链表直到末尾
         while((current = *linkp) != NULL)
             linkp = &(current->link);
-        *linkp = &book->link;
+        //*linkp = &book->link;
+        *linkp = book;
         book->link = current;
         book->bookName = (char *)calloc((strlen(new_bookName) + 1) * sizeof(char), 1);
         if(book->bookName != NULL)
@@ -532,7 +534,8 @@ int user_insert(Users_data **linkp, char *new_userName, float credit)
         //遍历链表直到末尾
         while((current = *linkp) != NULL)
             linkp = &(current->link);
-        *linkp = &user->link;
+        //*linkp = &user->link;
+        *linkp = user;
         user->link = current;
         user->userName = (char *)calloc((strlen(new_userName) + 1) * sizeof(char), 1);
         if(user->userName != NULL)

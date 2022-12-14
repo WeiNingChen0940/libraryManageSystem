@@ -30,7 +30,7 @@ int main()
     {
         printf("登录成功！\n");
     }
-    Menu_Main(uRootp,bRootp);
+    Menu_Main(&uRootp,&bRootp);
 
     bLinkp = bRootp;
     uLinkp = uRootp;
@@ -41,7 +41,7 @@ int main()
     //    printf("第%d本书:书名《%s》  价格为%.2f元\n", i++, bLinkp->bookName, bLinkp->prize);
     //    bLinkp = bLinkp->link;
     //}
-
+      
     //i = 1;
     //while(uLinkp != NULL)
     //{
